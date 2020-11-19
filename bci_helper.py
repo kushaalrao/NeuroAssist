@@ -8,6 +8,7 @@ from subprocess import call
 import matplotlib.pyplot as plt
 import numpy as np 
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from scipy.signal import butter, lfilter, lfilter_zi
 
 # initialize notches for bandpass filter
@@ -263,7 +264,7 @@ def compute_feature_matrix(epochs, freq):
 
 
 def train_classifier(feature_m0, feature_m1, feature_m2, feature_m3, 
-					 feature_m4, algorithm = 'RandomForestClassifier'):
+                        algorithm = 'RandomForestClassifier'):
 	""" Trains a random forest classifier from 5 different feature matrices
 
 	Arguments:
@@ -289,7 +290,7 @@ def train_classifier(feature_m0, feature_m1, feature_m2, feature_m3,
     class1 = np.ones((feature_matrix_1.shape[0], 1))
     class2 = np.full((feature_matrix_2.shape[0], 1), fill_value = 2)
     class3 = np.full((feature_matrix_3.shape[0], 1), fill_value = 3)
-    class4 = np.full((feature_matrix_4.shape[0], 1), fill_value = 4)
+
 
     # Concatenate class labels
     y = np.concatenate((class0, class1, class2, class3, class4), axis=0)

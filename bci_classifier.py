@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt  # Module used for plotting
 from pylsl import StreamInlet, resolve_byprop  # Module to receive EEG data
 import os
 import bci_helper as BCI 
+import socket
 
 # intialize parameters
 BUFFER_LENGTH   = 5
@@ -17,8 +18,6 @@ TRAINING_LENGTH = 20
 
 
 if __name__ == "__main__":
-    #os.system("ssh pi@192.168.1.17") #figure out where to put this line
-	#os.system("scp ") #potentially scp a file into the pi and run that
     
     # Parse Args
     parser = argparse.ArgumentParser(description='BCI Workshop example 2')
@@ -50,8 +49,7 @@ if __name__ == "__main__":
 	eeg_data2 = BCI.record_eeg(TRAINING_LENGTH, freq, channel_index)
 	print('Recording Mental Activity 3')
 	eeg_data3 = BCI.record_eeg(TRAINING_LENGTH, freq, channel_index)
-	print('Recording Mental Activity 4')
-	eeg_data4 = BCI.record_eeg(TRAINING_LENGTH, freq, channel_index)
+	
 
 	# Divide data into epochs
 	epochs_0 = BCI.epoch(eeg_data0, EPOCH_LENGTH * freq,
@@ -62,15 +60,12 @@ if __name__ == "__main__":
 							OVERLAP_LENGTH * freq)
 	epochs_3 = BCI.epoch(eeg_data3, EPOCH_LENGTH * freq,
 							OVERLAP_LENGTH * freq)
-	epochs_4 = BCI.epoch(eeg_data4, EPOCH_LENGTH * freq,
-							OVERLAP_LENGTH * freq)
 
 	# Compute corresponding feature matrices
 	feat_matrix0 = BCI.compute_feature_matrix(epochs_0, freq)
     feat_matrix1 = BCI.compute_feature_matrix(epochs_1, freq)
     feat_matrix2 = BCI.compute_feature_matrix(epochs_2, freq)
     feat_matrix3 = BCI.compute_feature_matrix(epochs_3, freq)
-    feat_matrix4 = BCI.compute_feature_matrix(epochs_4, freq)
 
     # Train Classifier 
     [classifier, mu_ft, std_ft, score] = BCIw.train_classifier(
@@ -83,6 +78,7 @@ if __name__ == "__main__":
 
     # Initialize buffers for real time data
     eeg_buffer       = np.zeros((int(freq * BUFFER_LENGTH), n_channels))
+    filter_state     = None
     decision_buffer  = np.zeros((30, 1))
 
 	# Plotter 
@@ -91,7 +87,7 @@ if __name__ == "__main__":
 	# Initialize socket instance 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
     # Create a port for the socket
-    s.bind((socket.gethostname(), 1222)) 
+    s.bind((socket.gethostname(), 1456)) 
     # Listen for an avaliable client for 5 seconds
     s.listen(5) 
 
@@ -124,10 +120,11 @@ if __name__ == "__main__":
             # accept client and get client IP
             clientsocket, address = s.accept() 
             print("Connection has been established.")
-
+            pred = np.mean(decision_buffer)
 			# input for Rasberry Pi
-			input = str(y_hat[0]) # str of first value of vector (0, 1, 2, or 3)
-
+			x = str(pred) 
+            print(x)
+            
 			# sends data 
 			clientsocket.send(bytes(x, 'utf-8')) 
 
