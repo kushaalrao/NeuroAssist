@@ -6,7 +6,7 @@ import numpy as np  # Module that simplifies computations on matrices
 import matplotlib.pyplot as plt  # Module used for plotting
 from pylsl import StreamInlet, resolve_byprop  # Module to receive EEG data
 import os
-import bci_helper as BCI 
+import bci_helper as BCI
 import socket
 
 # intialize parameters
@@ -18,7 +18,7 @@ TRAINING_LENGTH = 20
 
 
 if __name__ == "__main__":
-    
+
     # Parse Args
     parser = argparse.ArgumentParser(description='BCI Workshop example 2')
     parser.add_argument('channels', metavar='N', type=int, nargs='*',
@@ -29,12 +29,12 @@ if __name__ == "__main__":
     channel_index = args.channels
 
     # Connect to Muse
-    print("Connecting...") 
+    print("Connecting...")
     streams             = resolve_byprop('type', 'EEG', timeout = 2)
     inlet               = StreamInlet(streams[0], max_chunklen=12)
 	eeg_time_correction = inlet.time_correction()
 
-	# Pull relevent information form stream
+	# Pull relevant information form stream
 	info       = inlet.info()
 	desc       = info.desc()
 	freq       = int(info.nominal_srate())
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 	eeg_data2 = BCI.record_eeg(TRAINING_LENGTH, freq, channel_index)
 	print('Recording Mental Activity 3')
 	eeg_data3 = BCI.record_eeg(TRAINING_LENGTH, freq, channel_index)
-	
+
 
 	# Divide data into epochs
 	epochs_0 = BCI.epoch(eeg_data0, EPOCH_LENGTH * freq,
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     feat_matrix2 = BCI.compute_feature_matrix(epochs_2, freq)
     feat_matrix3 = BCI.compute_feature_matrix(epochs_3, freq)
 
-    # Train Classifier 
+    # Train Classifier
     [classifier, mu_ft, std_ft, score] = BCIw.train_classifier(
-            feat_matrix0, feat_matrix1, 
-            feat_matrix2, feat_matrix3, 
+            feat_matrix0, feat_matrix1,
+            feat_matrix2, feat_matrix3,
             feat_matrix4, 'RandomForestClassifier')
 
 
@@ -81,28 +81,28 @@ if __name__ == "__main__":
     filter_state     = None
     decision_buffer  = np.zeros((30, 1))
 
-	# Plotter 
+	# Plotter
 	plotter_decision = BCIw.DataPlotter(30, ['Decision'])
 
-	# Initialize socket instance 
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+	# Initialize socket instance
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # Create a port for the socket
-    s.bind((socket.gethostname(), 1456)) 
+    s.bind((socket.gethostname(), 1456))
     # Listen for an avaliable client for 5 seconds
-    s.listen(5) 
+    s.listen(5)
 
     # Start acquiring data and computing features
     try:
     	while True:
 
-    		# Pull data 
+    		# Pull data
     		eeg_data = BCI.record_eeg(SHIFT_LENGTH, freq, channel_index)
 
     		# Update EEG buffer
             eeg_buffer, filter_state = BCI.update_buffer(
                     eeg_buffer, ch_data, notch = True,
                     filter_state = filter_state)
-           
+
             # Get latest epoch
             epoch = BCI.get_last_data(eeg_buffer, EPOCH_LENGTH * freq)
 
@@ -113,33 +113,25 @@ if __name__ == "__main__":
             y_hat = BCI.test_classifier(classifier, band_powers.reshape(1, -1),
             							 mu_ft, std_ft)
 
-            # Update decision buffer 
+            # Update decision buffer
             decision_buffer, _ = BCIw.update_buffer(decision_buffer,
                                                     np.reshape(y_hat, (-1, 1)))
 
             # accept client and get client IP
-            clientsocket, address = s.accept() 
+            clientsocket, address = s.accept()
             print("Connection has been established.")
             pred = np.mean(decision_buffer)
 			# input for Rasberry Pi
-			x = str(pred) 
+			x = str(pred)
             print(x)
-            
-			# sends data 
-			clientsocket.send(bytes(x, 'utf-8')) 
 
-			# Visualize decisions 
+			# sends data
+			clientsocket.send(bytes(x, 'utf-8'))
+
+			# Visualize decisions
 			plotter_decision.update_plot(decision_buffer)
             plt.pause(0.00001)
 
     except KeyboardInterrupt:
 
     	 print('Closing program')
-
-
-
-
-
-
-
-
