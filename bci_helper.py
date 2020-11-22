@@ -14,7 +14,7 @@ from pylsl import StreamInlet, resolve_byprop  # Module to receive EEG data
 
 
 # initialize notches for bandpass filter
-NOTCH_B, NOTCH_A = butter(4, np.array([55,65])/(256/2), btype = 'bandstop')
+NOTCH_B, NOTCH_A = butter(4, np.array([55, 65])/(256/2), btype='bandstop')
 
 def record_eeg(r_length, freq, channel_i):
 	streams = resolve_byprop('type', 'EEG', timeout=2)
@@ -34,21 +34,22 @@ def record_eeg(r_length, freq, channel_i):
 
 	"""
 
-	data, timestamps = inlet.pull_chunk(
-	timeout = r_length + 1, max_samples = int(freq * r_length))
+	data, timestamps = inlet.pull_chunk( 
+		timeout = r_length + 1, 
+		max_samples = int(freq * r_length))
 
 	data = np.array(data)[:, channel_i]
 
 	return data
 
 
-def update_buffer(buffer, new_data, apply_filter = False, filter_state = None):
-	""" Title: BCI Workshop Auxiliary Tools
+def update_buffer(data_buffer, new_data, notch = False, filter_state = None):
+    """ Title: BCI Workshop Auxiliary Tools
 	Author: Cassani
 	Date: May 08 2015
-	Availability: https://github.com/NeuroTechX/bci-workshop """
+	Availability: https://github.com/NeuroTechX/bci-workshop 
 
-	""" Updates buffer with 'new_data' and can apply butterworth filter
+	Updates the buffer with new data and applies butterworth filter
 
 	Arguments:
 
@@ -62,24 +63,23 @@ def update_buffer(buffer, new_data, apply_filter = False, filter_state = None):
 	new_buffer   -- array of updated buffer [samples][channels]
 
 	"""
-	if new_data.ndim == 1:
-		new_data = new_data.reshape(-1, buffer.shape[1])
+	
+    if new_data.ndim == 1:
 
-	if apply_filter:
-		if filter_state is None:
-			# initialize filter state on buffer array
-			filter_state = np.tile(lfilter_zi(NOTCH_B, NOTCH_A),
-			(buffer.shape[1], 1)).T
-			print(filter_state)
-			print(buffer.shape[1], 1)
+        new_data = new_data.reshape(-1, data_buffer.shape[1])
+	
+    if notch:
+        if filter_state is None:
+            filter_state = np.tile(lfilter_zi(NOTCH_B, NOTCH_A),
+                                   (data_buffer.shape[1], 1)).T
+        
+        new_data, filter_state = lfilter(NOTCH_B, NOTCH_A, new_data, axis=0,
+                                         zi = filter_state)
 
-		new_data, filter_state = lfilter(NOTCH_B, NOTCH_A, new_data, axis=0,
-			zi=filter_state)
+    new_buffer = np.concatenate((data_buffer, new_data), axis=0)
+    new_buffer = new_buffer[new_data.shape[0]:, :]
 
-	new_buffer = np.concatenate((buffer, new_data), axis=0)
-	new_buffer = new_buffer[new_data.shape[0]:, :]
-
-	return new_buffer, filter_state
+    return new_buffer, filter_state
 
 
 
