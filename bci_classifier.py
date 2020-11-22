@@ -15,7 +15,7 @@ BUFFER_LENGTH   = 5
 EPOCH_LENGTH    = 1
 OVERLAP_LENGTH  = 0.8
 SHIFT_LENGTH    = EPOCH_LENGTH - OVERLAP_LENGTH
-TRAINING_LENGTH = 2
+TRAINING_LENGTH = 20
 INDEX_CHANNEL   = [0, 1 , 2, 3] # use all four electrodes
 N_CHANNELS      = 4
 
@@ -131,10 +131,9 @@ if __name__ == "__main__":
             # send data to client
             clientsocket, address = s.accept() # accepts client and gets IP of client
             print("Connection has been established.")
-            pred = np.mean(decision_buffer)
-            #for i in range: (0, 16):
-            x = str(pred) #str of first value of vector (0, 1, 2, or 3)
-            print(x)
+            pred = np.mean(decision_buffer[15:])
+            x = str(pred) #str of first value of vector (0, 1, 2, or 3)
+            print(x)
             clientsocket.send(bytes(x, 'utf-8')) #sends the data
 
            
