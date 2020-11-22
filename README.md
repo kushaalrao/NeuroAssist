@@ -8,17 +8,16 @@ After training the learning model on the EEG data associated with different eye 
 
 REQUIREMENTS
 ------------
-MUSE HEADSET
-MUSE LSL to stream
-Rasberry Pi
-BLED bluetooth thing
-{put other libraries needed here}
+*MUSE HEADSET
+*MUSE LSL to stream
+*Rasberry Pi
+*BLED bluetooth thing
 
 
 CONFIGURATION
 -------------
-
-{TODO}
+We explain the project and how to configure it here:
+https://www.youtube.com/watch?v=ASA42vg9GjQ
 
 SUPPORT
 -----------
