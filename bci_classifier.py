@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print(str(score * 100) + '% correctly predicted')
   
 
-    # Initialize the buffers for real time data procession
+    # Initialize the buffers for real time data processing
     eeg_buffer      = np.zeros((int(freq * BUFFER_LENGTH), N_CHANNELS))
     filter_state    = None
     decision_buffer = np.zeros((30, 1))
@@ -92,6 +92,8 @@ if __name__ == "__main__":
     #listen for an avaliable client for 5 seconds
     s.listen(5)
 
+   
+    """ PULL DATA AND TEST CLASSIFIER """
     try:
         while True:
 
@@ -108,7 +110,7 @@ if __name__ == "__main__":
                     eeg_buffer, ch_data, notch=True,
                     filter_state=filter_state)
 
-            """ 3.2 COMPUTE FEATURES AND CLASSIFY """
+           
             # Get newest samples from the buffer
             data_epoch = BCI.get_last_data(eeg_buffer,
                                             EPOCH_LENGTH * freq)
@@ -124,9 +126,9 @@ if __name__ == "__main__":
             decision_buffer, _ = BCI.update_buffer(decision_buffer,
                                                     np.reshape(y_hat, (-1, 1)))
 
-            print(decision_buffer)
-            #print(type(decision_buffer))
-
+            # print(decision_buffer)
+            
+            # send data to client
             clientsocket, address = s.accept() # accepts client and gets IP of client
             print("Connection has been established.")
             pred = np.mean(decision_buffer)
